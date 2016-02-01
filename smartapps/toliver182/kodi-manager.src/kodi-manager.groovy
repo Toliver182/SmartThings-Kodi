@@ -44,7 +44,8 @@ def installed() {
 }
 
 def initialize() {
-subscribe(location, null, response, [filterEvents:false])   
+subscribe(location, null, response, [filterEvents:false])  
+
 checkKodi();
 state.poll = true;
 getActiveStatus();
@@ -73,14 +74,16 @@ return encoded
 }
 
 
-def uninstalled() {
+/*def uninstalled() {
 
 	state.poll = false;    
+
 	def delete = getChildDevices()   
 	delete.each {
 		deleteChildDevice(it.deviceNetworkId)
 	}   
-}
+}*/
+
 
 
 def getActiveStatus(){
@@ -219,7 +222,9 @@ def checkKodi() {
 		log.debug "Checking to see if the client has been added"
     
     	def children = getChildDevices()  ;
-  		def childrenEmpty = children.isEmpty();        
+  		def childrenEmpty = children.isEmpty();  
+      
+        
      	def KodiClient = children.find{ d -> d.deviceNetworkId.contains("$settings.kodiIp") }  
      
         if(!KodiClient){
