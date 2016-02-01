@@ -19,9 +19,9 @@ definition(
     author: "toliver182",
     description: "Add kodi endpoints",
     category: "Safety & Security",
-    iconUrl: "http://download.easyicon.net/png/1126483/64/",
-    iconX2Url: "http://download.easyicon.net/png/1126483/128/",
-    iconX3Url: "http://download.easyicon.net/png/1126483/128/")
+    iconUrl: "https://raw.githubusercontent.com/xbmc/xbmc/master/media/icon48x48.png",
+    iconX2Url: "https://raw.githubusercontent.com/xbmc/xbmc/master/media/icon120x120.png",
+    iconX3Url: "https://raw.githubusercontent.com/xbmc/xbmc/master/media/icon256x256.png")
 
 
 preferences {
