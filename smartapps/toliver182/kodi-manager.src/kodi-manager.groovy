@@ -61,7 +61,6 @@ checkKodi();
     	state.poll = true;
     	getActiveStatus();
     } 
-    getActiveStatus();
 
 }
 
@@ -78,19 +77,23 @@ def getActiveStatus(){
 
 if(!state.poll) return;
 
-	def command = "{\"jsonrpc\": \"2.0\", \"method\": \"Player.GetActivePlayers\", \"id\": 1}"
+	//def command = "{\"jsonrpc\": \"2.0\", \"method\": \"Player.GetActivePlayers\", \"id\": 1}"
+    def command = "[{\"jsonrpc\": \"2.0\", \"method\": \"Player.GetActivePlayers\", \"id\": 1},{\"jsonrpc\": \"2.0\", \"method\": \"Player.GetProperties\",  \"params\": {    \"properties\": [      \"speed\"    ],    \"playerid\": 1  },  \"id\": 1},{\"jsonrpc\": \"2.0\", \"method\": \"Player.GetItem\", \"params\": { \"properties\": [\"title\", \"album\", \"artist\", \"season\", \"episode\", \"duration\", \"showtitle\", \"tvshowid\", \"thumbnail\", \"file\", \"fanart\", \"streamdetails\"], \"playerid\": 1 }, \"id\": \"VideoGetItem\"}]"
 	executeRequest("/jsonrpc", "POST",command);
     
      runIn(10, getActiveStatus);
 }
 
-def getPlayingStatus(){
-	def command = "{\"jsonrpc\": \"2.0\", \"method\": \"Player.GetProperties\",  \"params\": {    \"properties\": [      \"speed\"    ],    \"playerid\": 1  },  \"id\": 1}"
-	executeRequest("/jsonrpc", "POST",command);
-}
 def response(evt) {	 
     def msg = parseLanMessage(evt.description);
 }
+
+def getPlayingtitle(){
+def command = "{\"jsonrpc\": \"2.0\", \"method\": \"Player.GetItem\", \"params\": { \"properties\": [\"title\", \"album\", \"artist\", \"season\", \"episode\", \"duration\", \"showtitle\", \"tvshowid\", \"thumbnail\", \"file\", \"fanart\", \"streamdetails\"], \"playerid\": 1 }, \"id\": \"VideoGetItem\"}"
+	executeRequest("/jsonrpc", "POST",command);
+
+}
+
 
 
 
@@ -134,8 +137,6 @@ def switchChange(evt) {
         	def vol = getKodiVolume(evt.value);
             log.debug "Vol is: " + vol
         	setVolume(kodiIP, vol);
-        case "getPlayingStatus":
-        	getPlayingStatus();
         break;
     }
     
