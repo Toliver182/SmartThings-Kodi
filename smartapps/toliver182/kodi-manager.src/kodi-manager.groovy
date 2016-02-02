@@ -30,8 +30,8 @@ preferences {
       	input "clientName", "text", "title": "Client Name", multiple: false, required: true
   		input "kodiIp", "text", "title": "Kodi IP", multiple: false, required: true
         input "kodiPort", "text", "title": "Kodi port", multiple: false, required: true
-    	input "kodiUsername", "text", "title": "Kodi Username", multiple: false, required: true
-    	input "kodiPassword", "password", "title": "Kodi Password", multiple: false, required: true
+    	input "kodiUsername", "text", "title": "Kodi Username", multiple: false, required: false
+    	input "kodiPassword", "password", "title": "Kodi Password", multiple: false, required: false
     	input "theHub", "hub", title: "On which hub?", multiple: false, required: true
   }
 }
@@ -44,23 +44,19 @@ def installed() {
 }
 
 def initialize() {
+checkKodi();
 subscribe(location, null, response, [filterEvents:false])  
-
-checkKodi();
-state.poll = true;
-getActiveStatus();
-
-}
-
-def updated() {
-log.debug "Updated with settings: ${settings}"
-checkKodi();
-
-
     if(!state.poll){
     	state.poll = true;
     	getActiveStatus();
     } 
+setPlaybackState("stopped")
+
+}
+
+def updated() {
+unsubscribe();
+initialize()
 
 }
 
@@ -200,9 +196,14 @@ def previous(kodiIP) {
 def executeRequest(Path, method, command) {
     log.debug "Querying playback state of $settings.kodiIp"
 	def headers = [:] 
-    def basicAuth = basicAuthBase64();
+    
 	headers.put("HOST", "$settings.kodiIp:$settings.kodiPort")
-	headers.put("Authorization", "Basic " + basicAuth )
+    if("$settings.kodiUsername" !="" ){
+    def basicAuth = basicAuthBase64();
+    headers.put("Authorization", "Basic " + basicAuth )
+    }else{
+    log.debug "no user entered"
+    }
     headers.put("Content-Type", "application/json")
 	try {    
 		def actualAction = new physicalgraph.device.HubAction(
