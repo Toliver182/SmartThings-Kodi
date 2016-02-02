@@ -107,7 +107,7 @@ def switchChange(evt) {
     // Parse out the new switch state from the event data
     def command = getKodiCommand(evt.value);
    
-    log.debug "state: " + state
+    //log.debug "state: " + state
     
     switch(command) {
     	case "next":
