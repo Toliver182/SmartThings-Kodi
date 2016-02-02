@@ -76,8 +76,12 @@ metadata {
 
 // parse events into attributes
 def parse(evt) {
-def PlayingState = device.currentState("status")
 def msg = parseLanMessage(evt);
+
+if (!msg.body){
+return
+}
+
 
 if( msg.body == "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":\"OK\"}"){
 log.debug "standard ok"
@@ -101,9 +105,15 @@ return
 def slurper = new groovy.json.JsonSlurper().parseText(msg.body)
 
 def playerId = slurper[0].result.collect { it?.playerid ?: [] }
+log.debug "raw body: " + msg.body
 
 
+def PlayingState = device.currentState("status")
+if(!PlayingState){
+setPlaybackState("stopped")
+}
 if (playerId[0] > 0){
+ PlayingState = device.currentState("status")
             def speed = slurper[1].result.speed
             def title = slurper[2].result.item.showtitle
             if(!title){
@@ -120,7 +130,8 @@ if (playerId[0] > 0){
                     def playbackState = "playing";           
                    setPlaybackState(playbackState);
            }
-}else{
+} else{
+ PlayingState = device.currentState("status")
   		    if (PlayingState.value != "paused"){
                 def playbackState = "paused";           
                 setPlaybackState(playbackState);
@@ -225,7 +236,7 @@ def setPlaybackState(state) {
 
 def setPlaybackTitle(text) {
 
-    def currentPlaybackTitle = device.currentState("trackDescription").value
+    def currentPlaybackTitle = device.currentState("trackDescription")
     if (text != currentPlaybackTitle){
     	log.debug "Setting title to :" + text
     sendEvent(name: "trackDescription", value: text)
