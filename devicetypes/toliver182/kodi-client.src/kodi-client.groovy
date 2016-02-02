@@ -79,9 +79,31 @@ def parse(evt) {
 def PlayingState = device.currentState("status")
 def msg = parseLanMessage(evt);
 
+if( msg.body == "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":\"OK\"}"){
+log.debug "standard ok"
+return
+}
+if( msg.body == "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":{\"speed\":0}}"){
+log.debug "standard ok"
+return
+}
+if( msg.body == "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":{\"speed\":1}}"){
+log.debug "standard ok"
+return
+}
+if (msg.body == "{\"error\":{\"code\":-32100,\"message\":\"Failed to execute method.\"},\"id\":1,\"jsonrpc\":\"2.0\"}")
+{
+log.debug "error returned from kodi"
+return
+}
+
+
 def slurper = new groovy.json.JsonSlurper().parseText(msg.body)
-def playerID = slurper[0].result.playerid
-if(playerID){ // if there is a playerid then the player is active, next get specific state of player
+
+def playerId = slurper[0].result.collect { it?.playerid ?: [] }
+
+
+if (playerId[0] > 0){
             def speed = slurper[1].result.speed
             def title = slurper[2].result.item.showtitle
             if(!title){
@@ -104,15 +126,21 @@ if(playerID){ // if there is a playerid then the player is active, next get spec
                 setPlaybackState(playbackState);
 			}
 	}
-
-
-			}
-            else{
-            if (PlayingState.value != "stopped"){
+    } else {
+    
+    
+    
+    
+    
+    log.debug "no player id"
+     if (PlayingState.value != "stopped"){
                 def playbackState = "stopped";    
                 setPlaybackState(playbackState);
                 }
-            }
+    
+    }
+
+
 
 }
 
