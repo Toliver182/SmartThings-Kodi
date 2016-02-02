@@ -89,7 +89,6 @@ def getPlayingStatus(){
 	executeRequest("/jsonrpc", "POST",command);
 }
 def response(evt) {	 
-	log.debug "response recieved"
     def msg = parseLanMessage(evt.description);
 }
 
@@ -101,13 +100,12 @@ def switchChange(evt) {
     // We are only interested in event data which contains 
     if(evt.value == "on" || evt.value == "off") return;   
     
-	log.debug "Kodi event received: " + evt.value;
+	//log.debug "Kodi event received: " + evt.value;
 
     def kodiIP = getKodiAddress(evt.value);
     
     // Parse out the new switch state from the event data
     def command = getKodiCommand(evt.value);
-    log.debug "command recieved: " + command
    
     log.debug "state: " + state
     
@@ -200,13 +198,9 @@ def previous(kodiIP) {
 }
 
 def executeRequest(Path, method, command) {
-		   log.debug "Querying $settings.kodiIp"
-	log.debug "The " + method + " path is: " + Path;
-     
-  
+    log.debug "Querying playback state of $settings.kodiIp"
 	def headers = [:] 
     def basicAuth = basicAuthBase64();
-    log.debug "base64 is: "+ basicAuth
 	headers.put("HOST", "$settings.kodiIp:$settings.kodiPort")
 	headers.put("Authorization", "Basic " + basicAuth )
     headers.put("Content-Type", "application/json")
@@ -245,10 +239,9 @@ def String getKodiCommand(deviceNetworkId) {
 	def parts = deviceNetworkId.tokenize('.');
 	return parts[1];
 }
-def String getKodiVolume(deviceNetworkId) {
-def command = deviceNetworkId.replace("KodiClient:", "");
-	def parts = command.tokenize('.');
-	return parts[5];
+def String getKodiVolume(evt) {
+	def parts = evt.tokenize('.');
+	return parts[2];
 }
 private String NetworkDeviceId(){
     def iphex = convertIPtoHex(settings.kodiIp).toUpperCase()
