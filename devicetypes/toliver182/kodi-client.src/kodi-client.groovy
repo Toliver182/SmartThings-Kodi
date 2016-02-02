@@ -76,38 +76,49 @@ metadata {
 
 // parse events into attributes
 def parse(evt) {
+def PlayingState = device.currentState("status")
 def msg = parseLanMessage(evt);
-log.debug "device evt: " + msg.body
 
       	if(msg && msg.body && msg.body.startsWith("{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":[{\"playerid\":1,\"type\":\"video\"}]}"))
         {
-      		log.debug "Active, getting playback state"
+      		log.debug "Kodi is active, getting specific state"
       		sendCommand("getPlayingStatus") //Player is active, get specific state
       	}
         
          if(msg && msg.body && msg.body.startsWith("{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":[]}"))
       {
-  
+  			if (PlayingState.value != "stopped"){
             log.debug "playback stopped"
             def playbackState = "stopped";    
             setPlaybackState(playbackState);
-      	
+      	}else{
+        log.debug "State is already stopped, doing nothing"
+        }
       }
        if(msg && msg.body && msg.body.startsWith("{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":{\"speed\":1}}"))
       {
       		
+      		if (PlayingState.value != "playing"){
   			log.debug "playback playing"
           	def playbackState = "playing";           
            setPlaybackState(playbackState);
-  
+  		}
+        else {
+        log.debug "State is already playing, doing nothing"
+        }
   
       }
         if(msg && msg.body && msg.body.startsWith("{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":{\"speed\":0}}"))
 	{
+    if (PlayingState.value != "paused"){
+    		
   			log.debug "playback paused"
             def playbackState = "paused";           
             setPlaybackState(playbackState);
-
+}
+else {
+log.debug "State is already paused, doing nothing"
+}
     }
 
 }
