@@ -74,18 +74,6 @@ return encoded
 }
 
 
-/*def uninstalled() {
-
-	state.poll = false;    
-
-	def delete = getChildDevices()   
-	delete.each {
-		deleteChildDevice(it.deviceNetworkId)
-	}   
-}*/
-
-
-
 def getActiveStatus(){
 
 if(!state.poll) return;
@@ -101,71 +89,15 @@ def getPlayingStatus(){
 	executeRequest("/jsonrpc", "POST",command);
 }
 def response(evt) {	 
-    def msg = parseLanMessage(evt.description); 
- 	evaluatePlaybackState(evt);
-
+	log.debug "response recieved"
+    def msg = parseLanMessage(evt.description);
 }
 
-def evaluatePlaybackState(evt) {
-def msg = parseLanMessage(evt.description);
-def eventMap = stringToMap(evt.value)
-		//First check if player is active.
-      	if(msg && msg.body && msg.body.startsWith("{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":[{\"playerid\":1,\"type\":\"video\"}]}"))
-        {
-      		log.debug "Active, getting playback state"
-      		getPlayingStatus() //Player is active, get specific state
-      	}
-      // Player is not active, state = stopped
-      if(msg && msg.body && msg.body.startsWith("{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":[]}"))
-      {
-  
-            
-      		getChildDevices().each { kodiClient ->
-            def netId = kodiClient.deviceNetworkId
-            def ip = netId.replace("KodiClient:", "");
-            
-            def hexip = convertIPtoHex(ip).toUpperCase();
-            if(hexip == eventMap.ip){
-            log.debug "Setting playback state to stopped on " + netId
-            def playbackState = "stopped";    
-            kodiClient.setPlaybackState(playbackState);
-            }
-      		}
-      }
-      //Lazy coding, if the active state is true, specific state would have fired. check results.
-      if(msg && msg.body && msg.body.startsWith("{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":{\"speed\":1}}"))
-      {
-      		
-            
-           	getChildDevices().each { kodiClient ->
-             def netId = kodiClient.deviceNetworkId
-            def ip = netId.replace("KodiClient:", "");
-            def hexip = convertIPtoHex(ip).toUpperCase();
-            if(hexip == eventMap.ip){
-            log.debug "Setting playback state to playing on " + netId
-          	def playbackState = "playing";           
-           	kodiClient.setPlaybackState(playbackState);
-            }
-      		}
-      }
-    if(msg && msg.body && msg.body.startsWith("{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":{\"speed\":0}}"))
-	{
-    		
-            getChildDevices().each { kodiClient ->
-               def netId = kodiClient.deviceNetworkId
-            def ip = netId.replace("KodiClient:", "");
-            def hexip = convertIPtoHex(ip).toUpperCase();
-            if(hexip == eventMap.ip){
-            log.debug "Setting playback state to paused on" + netId
-            def playbackState = "paused";           
-            kodiClient.setPlaybackState(playbackState);
-      		}
-            }
-    }
-}
+
 
 
 def switchChange(evt) {
+
     // We are only interested in event data which contains 
     if(evt.value == "on" || evt.value == "off") return;   
     
@@ -175,6 +107,7 @@ def switchChange(evt) {
     
     // Parse out the new switch state from the event data
     def command = getKodiCommand(evt.value);
+    log.debug "command recieved: " + command
    
     log.debug "state: " + state
     
@@ -203,6 +136,8 @@ def switchChange(evt) {
         	def vol = getKodiVolume(evt.value);
             log.debug "Vol is: " + vol
         	setVolume(kodiIP, vol);
+        case "getPlayingStatus":
+        	getPlayingStatus();
         break;
     }
     
@@ -225,11 +160,11 @@ def checkKodi() {
   		def childrenEmpty = children.isEmpty();  
       
         
-     	def KodiClient = children.find{ d -> d.deviceNetworkId.contains("$settings.kodiIp") }  
+     	def KodiClient = children.find{ d -> d.deviceNetworkId.contains(NetworkDeviceId()) }  
      
         if(!KodiClient){
         log.debug "No Devices found, adding device"
-		KodiClient = addChildDevice("toliver182", "Kodi Client", "KodiClient:$settings.kodiIp" , theHub.id, [label:"$settings.clientName", name:"$settings.clientName"])
+		KodiClient = addChildDevice("toliver182", "Kodi Client", NetworkDeviceId() , theHub.id, [label:"$settings.clientName", name:"$settings.clientName"])
         log.debug "Added Device"
         }
         else
@@ -281,7 +216,7 @@ def executeRequest(Path, method, command) {
 		    path: Path,
             body: command,
 		    headers: headers)
-		
+			
 		sendHubCommand(actualAction)        
 	}
 	catch (Exception e) {
@@ -307,12 +242,16 @@ def ip = deviceNetworkId.replace("KodiClient:", "");
 }
 
 def String getKodiCommand(deviceNetworkId) {
-def command = deviceNetworkId.replace("KodiClient:", "");
-	def parts = command.tokenize('.');
-	return parts[4];
+	def parts = deviceNetworkId.tokenize('.');
+	return parts[1];
 }
 def String getKodiVolume(deviceNetworkId) {
 def command = deviceNetworkId.replace("KodiClient:", "");
 	def parts = command.tokenize('.');
 	return parts[5];
+}
+private String NetworkDeviceId(){
+    def iphex = convertIPtoHex(settings.kodiIp).toUpperCase()
+    def porthex = convertPortToHex(settings.kodiPort).toUpperCase()
+    return "$iphex:$porthex" 
 }
