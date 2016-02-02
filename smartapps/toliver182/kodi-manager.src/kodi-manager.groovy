@@ -187,7 +187,6 @@ def next(kodiIP) {
 }
 
 def stop(kodiIP){
-log.debug "im running"
 	def command = "{ \"id\": 1, \"jsonrpc\": \"2.0\", \"method\": \"Player.Stop\", \"params\": { \"playerid\": 1 } }"
     executeRequest("/jsonrpc", "POST",command)
 }
