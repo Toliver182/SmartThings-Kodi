@@ -50,7 +50,6 @@ subscribe(location, null, response, [filterEvents:false])
     	state.poll = true;
     	getActiveStatus();
     } 
-setPlaybackState("stopped")
 
 }
 
@@ -140,10 +139,8 @@ def switchChange(evt) {
 }
 
 def setVolume(kodiIP, level) {
-	log.debug "Executing 'setVolume'"
-	def command = "{\"jsonrpc\": \"2.0\", \"method\": \"Application.SetVolume\", \"params\": { \"volume\": "+ level + "}, \"id\": 1}"
-    
-    executeRequest("/jsonrpc", "POST",command)
+//TODO
+
 
 }
 
