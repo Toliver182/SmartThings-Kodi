@@ -77,7 +77,7 @@ metadata {
 // parse events into attributes
 def parse(evt) {
 def msg = parseLanMessage(evt);
-
+log.debug "raw body: " + msg.body
 if (!msg.body){
 return
 }
@@ -87,6 +87,7 @@ if( msg.body == "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":\"OK\"}"){
 log.debug "standard ok"
 return
 }
+
 if( msg.body == "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":{\"speed\":0}}"){
 log.debug "standard ok"
 return
@@ -104,8 +105,10 @@ return
 
 def slurper = new groovy.json.JsonSlurper().parseText(msg.body)
 
+
+
 def playerId = slurper[0].result.collect { it?.playerid ?: [] }
-log.debug "raw body: " + msg.body
+
 
 
 def PlayingState = device.currentState("status")
@@ -138,7 +141,9 @@ if (playerId[0] > 0){
 			}
 	}
     } else {
-    
+    if (msg.body.startsWith("{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":")){
+    log.debug "vol hit"
+    }
     
     
     
