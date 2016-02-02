@@ -79,47 +79,40 @@ def parse(evt) {
 def PlayingState = device.currentState("status")
 def msg = parseLanMessage(evt);
 
-      	if(msg && msg.body && msg.body.startsWith("{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":[{\"playerid\":1,\"type\":\"video\"}]}"))
-        {
-      		log.debug "Kodi is active, getting specific state"
-      		sendCommand("getPlayingStatus") //Player is active, get specific state
-      	}
-        
-         if(msg && msg.body && msg.body.startsWith("{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":[]}"))
-      {
-  			if (PlayingState.value != "stopped"){
-            log.debug "playback stopped"
-            def playbackState = "stopped";    
-            setPlaybackState(playbackState);
-      	}else{
-        log.debug "State is already stopped, doing nothing"
-        }
-      }
-       if(msg && msg.body && msg.body.startsWith("{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":{\"speed\":1}}"))
-      {
-      		
-      		if (PlayingState.value != "playing"){
-  			log.debug "playback playing"
-          	def playbackState = "playing";           
-           setPlaybackState(playbackState);
-  		}
-        else {
-        log.debug "State is already playing, doing nothing"
-        }
-  
-      }
-        if(msg && msg.body && msg.body.startsWith("{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":{\"speed\":0}}"))
-	{
-    if (PlayingState.value != "paused"){
-    		
-  			log.debug "playback paused"
-            def playbackState = "paused";           
-            setPlaybackState(playbackState);
-}
-else {
-log.debug "State is already paused, doing nothing"
-}
-    }
+def slurper = new groovy.json.JsonSlurper().parseText(msg.body)
+def playerID = slurper[0].result.playerid
+if(playerID){ // if there is a playerid then the player is active, next get specific state of player
+            def speed = slurper[1].result.speed
+            def title = slurper[2].result.item.showtitle
+            if(!title){
+            
+            title = slurper[2].result.item.title
+            setPlaybackTitle(title)
+            }else{
+            title = title +" " + slurper[2].result.item.title
+            setPlaybackTitle(title)
+            }
+            
+			if (speed > 0){
+      			if (PlayingState.value != "playing"){
+                    def playbackState = "playing";           
+                   setPlaybackState(playbackState);
+           }
+}else{
+  		    if (PlayingState.value != "paused"){
+                def playbackState = "paused";           
+                setPlaybackState(playbackState);
+			}
+	}
+
+
+			}
+            else{
+            if (PlayingState.value != "stopped"){
+                def playbackState = "stopped";    
+                setPlaybackState(playbackState);
+                }
+            }
 
 }
 
@@ -183,11 +176,12 @@ def sendCommand(command) {
 
 def setPlaybackState(state) {
 
-	log.debug "Executing 'setPlaybackState'"
+	log.debug "Setting playback state to: " + state
     switch(state) {
         case "stopped":
         sendEvent(name: "switch", value: "off");
         sendEvent(name: "status", value: "stopped");
+        
         break;
 
         case "playing":
@@ -202,9 +196,12 @@ def setPlaybackState(state) {
 }
 
 def setPlaybackTitle(text) {
-	log.debug "Executing 'setPlaybackTitle'"
-    
+
+    def currentPlaybackTitle = device.currentState("trackDescription").value
+    if (text != currentPlaybackTitle){
+    	log.debug "Setting title to :" + text
     sendEvent(name: "trackDescription", value: text)
+    }
 }
 
 def setPlaybackIcon(iconUrl) {
