@@ -75,8 +75,41 @@ metadata {
 }
 
 // parse events into attributes
-def parse(String description) {
-	log.debug "Virtual siwtch parsing '${description}'"
+def parse(evt) {
+def msg = parseLanMessage(evt);
+log.debug "device evt: " + msg.body
+
+      	if(msg && msg.body && msg.body.startsWith("{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":[{\"playerid\":1,\"type\":\"video\"}]}"))
+        {
+      		log.debug "Active, getting playback state"
+      		sendCommand("getPlayingStatus") //Player is active, get specific state
+      	}
+        
+         if(msg && msg.body && msg.body.startsWith("{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":[]}"))
+      {
+  
+            log.debug "playback stopped"
+            def playbackState = "stopped";    
+            setPlaybackState(playbackState);
+      	
+      }
+       if(msg && msg.body && msg.body.startsWith("{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":{\"speed\":1}}"))
+      {
+      		
+  			log.debug "playback playing"
+          	def playbackState = "playing";           
+           setPlaybackState(playbackState);
+  
+  
+      }
+        if(msg && msg.body && msg.body.startsWith("{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":{\"speed\":0}}"))
+	{
+  			log.debug "playback paused"
+            def playbackState = "paused";           
+            setPlaybackState(playbackState);
+
+    }
+
 }
 
 def play() {
