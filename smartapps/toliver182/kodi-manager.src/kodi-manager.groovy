@@ -126,10 +126,10 @@ def switchChange(evt) {
         case "play":
         case "pause":
         	playpause(kodiIP);
+        break;
         case "stop":
     		stop(kodiIP);
         break;
-        
         case "scanNewClients":
         	getClients();
             
@@ -187,9 +187,9 @@ def next(kodiIP) {
 }
 
 def stop(kodiIP){
-
-
-
+log.debug "im running"
+	def command = "{ \"id\": 1, \"jsonrpc\": \"2.0\", \"method\": \"Player.Stop\", \"params\": { \"playerid\": 1 } }"
+    executeRequest("/jsonrpc", "POST",command)
 }
 
 def previous(kodiIP) {
